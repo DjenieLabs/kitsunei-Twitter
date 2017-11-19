@@ -1,0 +1,29 @@
+{
+  "name": "kitsunei-Twitter",
+  "version": "0.0.1",
+  "description": "Code static quality checker for community blocks",
+  "repository": "kitsunei-Twitter",
+  "scripts": {
+    "test": "gulp",
+    "start": "echo \"\\033[38;5;166m\n\n    __   \n   / /\\  \n  / / .\\      \\033[38;5;166mKitsunei\\033[38;5;166m\n /_/    \\ \n \\ \\.   /  \\033[38;5;166mCommunity Block\\033[38;5;166m\n  \\ \\  / \n   \\_\\/  \n\n\n \\033[32mAccess the Kitsunei IDE and test your new community block\n\n\" && http-server -p 3080 --cors -c-1",
+      "build": "rm -rf dist && gulp build"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-filter": "^5.0.1",
+    "gulp-htmlmin": "^3.0.0",
+    "gulp-jshint": "^2.0.1",
+    "gulp-load-plugins": "^1.5.0",
+    "gulp-order": "^1.1.1",
+    "gulp-uglify": "^3.0.0",
+    "gulp-uglifycss": "^1.0.8",
+    "gulp-util": "^3.0.7",
+    "http-server": "^0.9.0",
+    "jshint": "^2.9.3",
+    "pump": "^1.0.2"
+  }
+}

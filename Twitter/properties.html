@@ -1,0 +1,63 @@
+<!-- Custom Settings -  Twitter Block -->
+<template id="block-custom-properties">
+  <!-- Popup to configure tweet --> -->
+    <div id="msgPreview" class="ui modal">
+      <div class="header">This is a preview of your tweet</div>
+      <div class="content">
+        {{text}}
+      </div>
+    </div>
+
+    <!-- <div id="msgNew" class="ui modal">
+      <div class="header">Name</div>
+      <div class="content">
+        <textarea class="tweet-content" disabled type="text" data-index={{index}} placeholder="The temperature is _temperature_ #kitsunei" style="color:white" > 
+          {{text}}
+        </textarea>
+      </div>
+    </div> -->
+    
+  <div class="ui form">
+    {{#each templates}}
+    <div class="inline fields template-row" data-index={{index}}>
+      <div class="ten wide field">
+        <div class="ui inverted transparent icon input">
+          <input class="tweet-title" disabled type="text" data-index={{index}} placeholder="Message {{index}}" value="{{title}}" style="color:white" >
+        </div>
+      </div>
+
+
+      <div class="two wide field">
+        <button id="btDelete" data-index={{index}} class="circular ui mini black icon button">
+          <i class="white icon delete"></i>
+        </button>
+      </div>
+
+      <div class="two wide field">
+        <button id="btEdit" data-index={{index}} class="circular ui mini black icon button">
+          <i class="white icon edit"></i>
+        </button>
+      </div>
+
+    </div>
+    <!-- Edition textbox -->
+    <div class="inline fields template-row" data-index={{index}}>
+      <div class="ten wide field">
+        <div class="ui inverted transparent icon input">
+          <textarea class="tweet-content" id="txtContent" disabled type="text" data-index={{index}} placeholder="The temperature is _temperature_ #kitsunei" style="color:white" > 
+            {{text}}
+          </textarea>
+        </div>
+      </div>
+    </div>
+
+    {{/each}}
+
+    <div class="ui inverted divider"></div>
+    <div class="inline mini field">
+      <button id="btAdd" class="circular ui icon button">
+        <i class="icon plus"></i>
+      </button>
+    </div>
+  </div>
+</template>

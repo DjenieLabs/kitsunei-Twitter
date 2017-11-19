@@ -1,0 +1,12 @@
+{
+  "name": "kitsunei-Twitter",
+  "version": "0.1.0",
+  "description": "Post messages to twitter",
+  "homepage": "",
+  "authors": [
+    "Kitsunei"
+  ],
+  "main": "dist/main.js",
+  "keywords": [],
+  "license": "MIT"
+}
