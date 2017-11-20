@@ -1,7 +1,7 @@
 {
   "name": "kitsunei-Twitter",
   "version": "0.0.1",
-  "description": "Code static quality checker for community blocks",
+  "description": "Send tweets from the Logic Maker",
   "repository": "kitsunei-Twitter",
   "scripts": {
     "test": "gulp",

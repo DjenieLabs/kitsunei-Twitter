@@ -5,7 +5,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   // number of followers.
   // Preview: Simulates a Tweet event but shows a popup with the tweet instead
   // of sending it.
-  var actions = ["Tweet", "GetFollowers", "Preview"];
+  var actions = ["Tweet", "GetFollowersCount", "Preview"];
   var inputs = ["SendOK", "SendError", "FollowerCount", "Mention"];
   var _objects = {};
 
@@ -21,17 +21,19 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   Twitter.getActions = function() {
     var list = actions.splice(0);
     // Extract the list of variables
-    this.settings.templates.forEach(function(t){
+    this.config.templates.forEach(function(t){
       var reg = /_(.*?)_/g;
-      var match = reg.exec(t);
+      var match = reg.exec(t.text);
       var group = '';
       while(match !== null){
         group = match[0];
         // Make sure the variable isn't already added.
         if(list.indexOf(group) === -1){
           // Pushing the group name
-        list.push(group);
+          list.push(group);
         }
+        
+        match = reg.exec(t.text);
       }
     });
 
@@ -42,16 +44,6 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     return inputs;
   };
 
-  /**
-   * (OPTIONAL)
-   * Called when no logic has been added in the Logic Maker.
-   * Here you can define the default input to use to send
-   * data to any child block connected to this block's canvas.
-   * IMPORTANT: Output Blocks SHOULD NOT have this method
-   */
-  // Twitter.getDefaultInput = function() {
-  //   return "";
-  // };
 
   /**
    * (OPTIONAL)
@@ -92,7 +84,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * properties in order to make the block work.
    */
   Twitter.hasMissingProperties = function() {
-    return this.settings.templates.length === 0;
+    return this.config.templates.length === 0;
   };
 
   /**
@@ -130,12 +122,13 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    */
   Twitter.onLoad = function() {
     var that = this;
-
-    this.settings.templates = [];
+    this.config = {
+      templates: []
+    };
 
     // Load previously stored settings
     if (this.storedSettings && this.storedSettings.templates) {
-      this.settings.templates = this.storedSettings.templates || [];
+      this.config.templates = this.storedSettings.templates || [];
     }
 
     // Load our properties template and keep it in memory
@@ -143,16 +136,6 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
       that.propTemplate = template;
     });
   };
-
-
-  /**
-   * Allows blocks controllers to change the content
-   * inside the Logic Maker container
-   */
-  // Twitter.lmContentOverride = function() {
-  //   // Use this to inject your custom HTML into the Logic Maker screen.
-  //   return "";
-  // };
 
   /**
    * Parent is asking me to execute my logic.
@@ -162,11 +145,38 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   Twitter.onExecute = function(event) {
     if(event.action === 'Tweet'){
       // Sends whatever data arrive.
+      Twitter.sendRequest.call(this, 'sendTweet', event.data).then(function(r){
+        console.log("Tweet sent! ", r);
+      }).catch(function(e){
+        notification.notify( 'error', 'Error sending tweet' );
+        console.log("Error sending tweet: ", e);
+      });
+    }else if(event.action === 'GetFollowersCount'){
+      Twitter.sendRequest.call(this, 'getFollowersCount').then(function(r){
+        console.log("Total Followers ", r);
+      }).catch(function(e){
+        notification.notify( 'error', 'Error getting the followers count' );
+        console.log("Error getting followers count: ", e);
+      });
     }else if(event.action === 'Populate'){
 
     }
   };
 
+
+  Twitter.sendRequest = function (type, options){
+    var parameters = {argvs: {type: type}};
+    if(options){
+      Object.assign(parameters, options);
+    }
+    
+    Hub.request('service:twitter', parameters).then(function(res){
+      console.log("Message sent! ", res);
+    }).catch(function(err){
+      notification.notify( 'error', 'Error saving new events.' );
+      console.log("Hook Error: ", err);
+    });
+  }
 
   /**
    * Triggered when the user clicks on a block.
@@ -178,47 +188,105 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    */
   Twitter.onClick = function() {
     // Nothing to do here
-    renderInterface.call(this);
+    Twitter.renderInterface.call(this);
   };
 
   /**
    * Helper method to populate the properties panel.
    */
   Twitter.renderInterface = function(){
+    var that = this;
     if(!this.propTemplate) return;
-    easy.clearCustomSettingsPanel();
+    if(!Ppanel.isVisible()) return;
+    
+    
+    easy.clearAll();
     // Compile template using current list
-    this.myPropertiesWindow = $(this.propTemplate(this.settings));
+    this.myPropertiesWindow = $(this.propTemplate(this.config));
     // FIXME: For some reason .find(#msgModal) is not working
-    this.modalWindow = $(this.myPropertiesWindow[0]);
+    // this.modalWindow = $(this.myPropertiesWindow[0]);
 
     // Interface event handlers
-    this.myPropertiesWindow.find("#btAdd").click(addNewTemplate.bind(this));
-    this.myPropertiesWindow.find("#btEdit").click(function(){
-      Twitter.editTemplate.call(that, this);
+    this.myPropertiesWindow.find("#btAdd").click(Twitter.addNewTemplate.bind(this));
+    this.myPropertiesWindow.find("#btEdit").click(Twitter.editTemplate.bind(this));
+    this.myPropertiesWindow.find("#btDelete").click(Twitter.deleteTemplate.bind(this));
+    this.myPropertiesWindow.find(".tweet-title").focusout(function(el){
+      var index = getIndexFromElement(el);
+      Twitter.updateItem.call(that, index);
     });
-    this.myPropertiesWindow.find("#btDelete").click(function(){
-      Twitter.deleteTemplate.call(that, this);
-    });
+
+    // Display elements
+    easy.displayCustomSettings(this.myPropertiesWindow, true, true);
   };
 
+  /**
+   * Creates a new empty template
+   */
   Twitter.addNewTemplate = function(){
     var template = {
       title: '',
       text: 'Type your tweet here. You can use _variableName_ to create dynamic content! #kitsunei'
     }
 
-    this.settings.templates.push(template);
+    this.config.templates.push(template);
 
-    this.controller.renderInterface.call(this);
+    Twitter.renderInterface.call(this);
   };
+
+  Twitter.toggleItems = function(editing, index){
+    var btn = this.myPropertiesWindow.find("#btEdit[data-index='"+index+"']");
+    if(btn){
+      var icon = btn.find("i");
+
+      icon.toggleClass("yellow save", editing);
+      icon.toggleClass("edit", !editing);
+    }
+  }
+
+  
+  function getIndexFromElement(el){
+    var index = $(el.currentTarget).attr("data-index");
+    if(index.length){
+      return Number(index);
+    }else{
+      return -1;
+    }
+  }
 
   /**
    * Shows the text area to modify the template
    */
-  Twitter.editTemplate = function(index){
-    var content = this.myPropertiesWindow.find("#txtContent");
-    content.show();
+  Twitter.editTemplate = function(el){
+    var index = getIndexFromElement(el);
+    if(index != -1){
+      var container = this.myPropertiesWindow.find(".tweet-text-container[data-index='"+index+"']");
+
+      if(container.length){
+        var wasEditing = container.is(":visible");  
+        Twitter.toggleItems.call(this, !wasEditing, index);
+        if(wasEditing){
+          Twitter.updateItem.call(this, index);
+        }else{
+          container.show(); 
+        }
+      }
+    }
+  };
+
+  
+  /**
+  * Reads the interface and updates the item
+  * with its contents
+  */
+  Twitter.updateItem = function(index){
+    var item = this.myPropertiesWindow.find(".tweet-item[data-index='"+index+"']");
+    if(item.length){
+      var text = item.find("#txtContent").val();
+      var title = item.find(".tweet-title").val();
+      this.config.templates[index].text = text;
+      this.config.templates[index].title = title;
+      Twitter.renderInterface.call(this);
+    }
   };
 
   // Removes one item from the array of codes
@@ -226,9 +294,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     var that = this;
     // Since indices change as we add or delete
     // elements, we MUST search for the actual item
-    var index = $(el).attr("data-index");
-    if(index !== undefined){
-      this.settings.templates.splice(index);
+    var index = getIndexFromElement(el);
+    if(index != -1){
+      this.config.templates.splice(index, 1);
       Twitter.renderInterface.call(this);
     }
   }
