@@ -261,7 +261,11 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
       that.processData(evt);
     }).catch(function(e){
       console.log("Error sending tweet: ", e);
-      notification.notify( 'error', 'Error sending tweet' );
+      var msg = "Error sending tweet";
+      if(e.data && typeof e.data === 'string'){
+        msg = e.data;
+      }
+      notification.notify( 'error', msg);
       var evt = {senderror: true};
       that.processData(evt);
     });
