@@ -197,7 +197,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
         notification.notify( 'error', 'Error getting the followers count' );
         console.log("Error getting followers count: ", e);
       });
-    }else if(event.action.indexOf("Set :") != -1){
+    }else if(event.action.indexOf("Set: ") != -1){
       var sp = event.action.split("Set: ");
       var varName = sp[1];
       this.config.values[varName] = event.data;
@@ -323,7 +323,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
       var that = this;
       if(variables){
         variables.forEach(function(v){
-          content.replace(v, that.config.values[v] || "");
+          content = content.replace("_"+v+"_", that.config.values[v] || "");
         });
 
         return content; 

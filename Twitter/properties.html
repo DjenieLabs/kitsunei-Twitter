@@ -88,7 +88,13 @@
             <div class="Tweet-body e-entry-content">
               
               <div class="u-hiddenVisually js-inViewportScribingTarget"></div>
-              <p class="Tweet-text e-entry-title" lang="en" dir="ltr">{{contentInit}}<span class="u-hiddenVisually">{{contentLast}}&nbsp;</span>…</p>
+              
+              <p class="Tweet-text e-entry-title" lang="en" dir="ltr">
+                {{contentInit}}
+                {{#ifNotEqual contentLast ''}}
+                <span class="u-hiddenVisually">{{contentLast}}&nbsp;</span>…
+                {{/ifNotEqual}}
+              </p>
               
               <div class="Tweet-metadata dateline">
                 
