@@ -3,9 +3,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   // Tweet: Sends whatever data arrives.
   // GetFollowers: Produces an event to the 'FollowerCount' input with the current
   // number of followers.
-  // Preview: Simulates a Tweet event but shows a popup with the tweet instead
+  // Preview (added dynamically): Simulates a Tweet event but shows a popup with the tweet instead
   // of sending it.
-  var actions = ["Tweet", "GetFollowersCount", "Preview"];
+  var actions = ["Tweet", "GetFollowersCount"];
   var inputs = ["SendOK", "SendError", "FollowerCount", "Mention"];
   var _objects = {};
 
@@ -16,29 +16,54 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   Twitter.isInputBlock = true;
   Twitter.isOutputBlock = true;
 
-  // TODO: Review if this is a trully unique instance?
-
-  Twitter.getActions = function() {
-    var list = actions.splice(0);
-    // Extract the list of variables
-    this.config.templates.forEach(function(t){
+  /**
+   * @returns a list of the variables used in the 
+   * given template index.
+   */
+  Twitter.getTemplateVariables = function(index){
+    var list = [];
+    if(index < this.config.templates.length){
       var reg = /_(.*?)_/g;
-      var match = reg.exec(t.text);
+      var template = this.config.templates[index];
+      var match = reg.exec(template.text);
       var group = '';
       while(match !== null){
-        group = match[0];
+        group = match[1];
         // Make sure the variable isn't already added.
         if(list.indexOf(group) === -1){
           // Pushing the group name
           list.push(group);
         }
-        
-        match = reg.exec(t.text);
+  
+        match = reg.exec(template.text);
       }
+    }
+    
+    return list;
+  }
+
+  /**
+   * @returns the list of actions
+   * and template variables
+   */
+  Twitter.getActions = function() {
+    var list = actions.slice();
+    var that = this;
+    // Extract the list of variables
+    this.config.templates.forEach(function(t, index){
+      list.push("Preview: "+t.title);
+      var vars = Twitter.getTemplateVariables.call(that, index);
+      vars.forEach(function(v){
+        if(list.indexOf(v) === -1){
+          // Pushing the group name
+          list.push("Set: " + v);
+        }
+      });
     });
 
     return list;
   };
+
 
   Twitter.getInputs = function() {
     return inputs;
@@ -64,7 +89,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * (Numbers, Strings)
    */
   Twitter.onBeforeSave = function() {
-    return this.settings;
+    return this.config;
   };
 
   /**
@@ -123,7 +148,8 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   Twitter.onLoad = function() {
     var that = this;
     this.config = {
-      templates: []
+      templates: [],
+      values: {}
     };
 
     // Load previously stored settings
@@ -134,7 +160,20 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     // Load our properties template and keep it in memory
     this.loadTemplate('properties.html').then(function(template) {
       that.propTemplate = template;
+      // Since the link was already loaded it gets loaded from the cache
+      // then we select the correct template
+      return that.loadTemplate('properties.html', 'twitter-preview').then(function(template) {
+        that.previewBox = template;
+      });
     });
+
+    this.loadStyleSheet(this.basePath + "css/twitter-block-style.css").then(function(){
+      console.log("Twitter stylesheet loaded!")
+    }).catch(function(e){
+      console.log("Error loading stylesheet: ", e);
+    });
+
+    
   };
 
   /**
@@ -158,12 +197,33 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
         notification.notify( 'error', 'Error getting the followers count' );
         console.log("Error getting followers count: ", e);
       });
-    }else if(event.action === 'Populate'){
-
+    }else if(event.action.indexOf("Set :") != -1){
+      var sp = event.action.split("Set: ");
+      var varName = sp[1];
+      this.config.values[varName] = event.data;
+      console.log("Values: ", this.config.values);
+    }else if(event.action.indexOf("Preview: ") != -1){
+      var sp = event.action.split("Preview: ");
+      var title = sp[1];
+      var index = Twitter.getTemplateIndexByTitle.call(this, title);
+      if(index !== undefined){
+        Twitter.showPreview.call(this, index);
+      }
     }
   };
 
+  
+  Twitter.getTemplateIndexByTitle = function(title){
+    for(var i = 0; i < this.config.templates.length; i++){
+      if(this.config.templates[i].title === title){
+        return i;
+      }
+    }
+  };
 
+  /**
+   * Makes an API request.
+   */
   Twitter.sendRequest = function (type, options){
     var parameters = {argvs: {type: type}};
     if(options){
@@ -191,6 +251,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     Twitter.renderInterface.call(this);
   };
 
+  Twitter.renderPreview = function(){
+
+  }
   /**
    * Helper method to populate the properties panel.
    */
@@ -202,9 +265,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     
     easy.clearAll();
     // Compile template using current list
-    this.myPropertiesWindow = $(this.propTemplate(this.config));
-    // FIXME: For some reason .find(#msgModal) is not working
-    // this.modalWindow = $(this.myPropertiesWindow[0]);
+    this.myPropertiesWindow = $(this.propTemplate(this));
 
     // Interface event handlers
     this.myPropertiesWindow.find("#btAdd").click(Twitter.addNewTemplate.bind(this));
@@ -218,6 +279,57 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     // Display elements
     easy.displayCustomSettings(this.myPropertiesWindow, true, true);
   };
+
+  function getRandomNum(min, max){
+    var n = Math.floor(Math.random()*(max-min+1)+min);
+    return n.toLocaleString();
+  }
+
+  Twitter.showPreview = function(index){
+    if(this.previewBox){
+      var parsedTemplate = Twitter.parseTemplate.call(this, index);
+      if(parsedTemplate){
+        var d = moment().format('h:mm A - MMM Do YYYY');
+        var params = {
+          basePath: this.basePath,
+          username: 'alexagu',
+          contentInit: parsedTemplate.substr(0, 200),
+          contentLast: parsedTemplate.substr(201),
+          date: d,
+          replies: getRandomNum(2, 200),
+          retweets: getRandomNum(200, 2000),
+          likes: getRandomNum(200, 30000),
+        }
+        this.previewWindow = $(this.previewBox(params));
+        // this.myPropertiesWindow.append(this.previewWindow);
+        var modalBox = this.previewWindow.closest("#msgPreview");
+        // this.previewWindow.find(".content").html(parsedTemplate);
+        modalBox.modal({
+          inverted: true,
+          transition: 'scale',
+          onHidden: function(){
+            modalBox.remove();
+          }
+        }).modal('show');
+      }
+    }
+  };
+
+  Twitter.parseTemplate = function(index){
+    if(index < this.config.templates.length){
+      var template = this.config.templates[index];
+      var content = template.text;
+      var variables = Twitter.getTemplateVariables.call(this, index);
+      var that = this;
+      if(variables){
+        variables.forEach(function(v){
+          content.replace(v, that.config.values[v] || "");
+        });
+
+        return content; 
+      }
+    };
+  }
 
   /**
    * Creates a new empty template
@@ -338,22 +450,6 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   Twitter.onAddedToCanvas = function() {
 
   };
-
-
-
-  /**
-   * This method is called when the user hits the "Save"
-   * recipe button. Any object you return will be stored
-   * in the recipe and can be retrieved during startup (@onLoad) time.
-   * Be aware that only primitive properties are stored
-   * (Numbers, Strings)
-   */
-  Twitter.onBeforeSave = function(){
-    return {
-      txtTitle: this._txtTitle
-    };
-  };
-
 
 
 
