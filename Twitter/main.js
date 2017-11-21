@@ -301,16 +301,21 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
           likes: getRandomNum(200, 30000),
         }
         this.previewWindow = $(this.previewBox(params));
-        // this.myPropertiesWindow.append(this.previewWindow);
-        var modalBox = this.previewWindow.closest("#msgPreview");
-        // this.previewWindow.find(".content").html(parsedTemplate);
-        modalBox.modal({
-          inverted: true,
-          transition: 'scale',
-          onHidden: function(){
-            modalBox.remove();
-          }
-        }).modal('show');
+        var modalBox = this.previewWindow.closest("#msg-tweet-preview");
+        // Find any previews window
+        var previousW = $("#msg-tweet-preview");
+        if(previousW.length){
+          modalBox.css("left", previousW.position().left + "px");
+          modalBox.css("top", previousW.position().top + "px");
+          previousW.remove();
+        }
+
+        modalBox.find("#tweet-close-btn").click(function(){
+          modalBox.remove(); 
+        });
+
+        modalBox.appendTo("body");
+        modalBox.draggable({handle: ".header"});
       }
     }
   };

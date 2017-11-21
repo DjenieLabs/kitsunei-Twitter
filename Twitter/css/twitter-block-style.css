@@ -152,7 +152,7 @@
 }
 .tweet-box .EmbeddedTweet {
 	overflow: hidden;
-	cursor: pointer;
+	/* cursor: pointer; */
 	background-color: #fff;
 	border: 1px solid #e1e8ed;
 	border-radius: 4px;
@@ -296,4 +296,20 @@
 .tweet-box .TweetAuthor-verifiedBadge {
 	position: absolute;
 	top: 0;
+}
+#msg-tweet-preview{
+	width: 400px !important;
+	margin: -200px;
+	display: block;
+	z-index: 270;
+}
+
+#tweet-close-btn{
+	float: right;
+	background-color: transparent;
+}
+
+#msg-tweet-preview .header{
+	user-select: none;
+	cursor: move;
 }
