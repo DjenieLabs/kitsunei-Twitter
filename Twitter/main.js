@@ -6,7 +6,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   // Preview (added dynamically): Simulates a Tweet event but shows a popup with the tweet instead
   // of sending it.
   var actions = ["Tweet", "GetFollowersCount"];
-  var inputs = ["SendOK", "SendError", "FollowerCount", "Mention"];
+  var inputs = ["SendOK", "SendError", "FollowersCount", "Mention"];
   var _objects = {};
 
   var Twitter = {};
@@ -52,6 +52,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     // Extract the list of variables
     this.config.templates.forEach(function(t, index){
       list.push("Preview: "+t.title);
+      list.push("Tweet: "+t.title);
       var vars = Twitter.getTemplateVariables.call(that, index);
       vars.forEach(function(v){
         if(list.indexOf(v) === -1){
@@ -184,35 +185,51 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   Twitter.onExecute = function(event) {
     if(event.action === 'Tweet'){
       // Sends whatever data arrive.
-      Twitter.sendRequest.call(this, 'sendTweet', event.data).then(function(r){
-        console.log("Tweet sent! ", r);
-      }).catch(function(e){
-        notification.notify( 'error', 'Error sending tweet' );
-        console.log("Error sending tweet: ", e);
-      });
+      Twitter.tweet.call(this, event.data);
     }else if(event.action === 'GetFollowersCount'){
-      Twitter.sendRequest.call(this, 'getFollowersCount').then(function(r){
-        console.log("Total Followers ", r);
-      }).catch(function(e){
-        notification.notify( 'error', 'Error getting the followers count' );
-        console.log("Error getting followers count: ", e);
-      });
-    }else if(event.action.indexOf("Set: ") != -1){
-      var sp = event.action.split("Set: ");
-      var varName = sp[1];
+      Twitter.getFollowers.call(this);
+    }else if(eventIs(event, "Set: ")){
+      var varName = getTitle(event, "Set: ");
       this.config.values[varName] = event.data;
       console.log("Values: ", this.config.values);
-    }else if(event.action.indexOf("Preview: ") != -1){
-      var sp = event.action.split("Preview: ");
-      var title = sp[1];
+    }else if(eventIs(event, "Preview: ")){
+      var title = getTitle(event, "Preview: ");
       var index = Twitter.getTemplateIndexByTitle.call(this, title);
       if(index !== undefined){
         Twitter.showPreview.call(this, index);
       }
+    }else if(eventIs(event, "Tweet: ")){
+      var title = getTitle(event, "Tweet: ");
+      var index = Twitter.getTemplateIndexByTitle.call(this, title);
+      if(index !== undefined){
+        Twitter.tweetTemplate.call(this, index);
+      }
     }
   };
 
-  
+  Twitter.getFollowers = function(){
+    var that = this;
+    return Twitter.sendRequest.call(this, 'getFollowersCount').then(function(r){
+      console.log("Total Followers ", r);
+      if(r.success){
+        var evt = {followerscount: r.data};
+        that.processData(evt);
+      }
+    }).catch(function(e){
+      notification.notify( 'error', 'Error getting the followers count' );
+      console.log("Error getting followers count: ", e);
+    });
+  }
+
+  function eventIs(evt, expected){
+    return (evt.action.indexOf(expected) != -1);
+  };
+
+  function getTitle(evt, delimiter){
+    var sp = evt.action.split(delimiter);
+    return sp[1];
+  };
+
   Twitter.getTemplateIndexByTitle = function(title){
     for(var i = 0; i < this.config.templates.length; i++){
       if(this.config.templates[i].title === title){
@@ -221,20 +238,46 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     }
   };
 
+  Twitter.tweetTemplate = function(index){
+    var parsedTemplate = Twitter.parseTemplate.call(this, index);
+    if(parsedTemplate){
+      Twitter.tweet.call(this, parsedTemplate);
+    }
+  }
+
+  /**
+   * Tweets out the raw text.
+   * It shows a notification if there was an error
+   * sending the tweet.
+   * @returns nothing.
+   */
+  Twitter.tweet = function(text){
+    var that = this;
+    return Twitter.sendRequest.call(this, 'sendTweet', {message: text}).then(function(r){
+      console.log("Tweet sent! ", r);
+      notification.notify( 'success', 'Tweet sent!' );
+      // Send LM event
+      var evt = {sendok: true};
+      that.processData(evt);
+    }).catch(function(e){
+      console.log("Error sending tweet: ", e);
+      notification.notify( 'error', 'Error sending tweet' );
+      var evt = {senderror: true};
+      that.processData(evt);
+    });
+  }
+
   /**
    * Makes an API request.
    */
   Twitter.sendRequest = function (type, options){
-    var parameters = {argvs: {type: type}};
-    if(options){
-      Object.assign(parameters, options);
-    }
-    
-    Hub.request('service:twitter', parameters).then(function(res){
-      console.log("Message sent! ", res);
-    }).catch(function(err){
-      notification.notify( 'error', 'Error saving new events.' );
-      console.log("Hook Error: ", err);
+    return new Promise(function (resolve, reject) {
+      var parameters = {argvs: {type: type}};
+      if(options){
+        Object.assign(parameters.argvs, options);
+      }
+      
+      Hub.request('service:twitter', parameters).then(resolve).catch(reject); 
     });
   }
 
@@ -251,9 +294,6 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     Twitter.renderInterface.call(this);
   };
 
-  Twitter.renderPreview = function(){
-
-  }
   /**
    * Helper method to populate the properties panel.
    */
@@ -320,6 +360,12 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     }
   };
 
+  /**
+   * Populates the template at @index with the
+   * variables set so far.
+   * @returns a string with the parsed content
+   * of the template.
+   */
   Twitter.parseTemplate = function(index){
     if(index < this.config.templates.length){
       var template = this.config.templates[index];
