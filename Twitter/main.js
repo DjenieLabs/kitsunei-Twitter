@@ -1,4 +1,4 @@
-define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel, easy) {
+define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB, Ppanel, easy, User) {
 
   // Tweet: Sends whatever data arrives.
   // GetFollowers: Produces an event to the 'FollowerCount' input with the current
@@ -174,7 +174,30 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
       console.log("Error loading stylesheet: ", e);
     });
 
-    
+    Twitter.userAuthCheck.call(this);
+  };
+
+  /**
+  * Checks if the user has authorize the application
+  */
+  Twitter.userAuthCheck = function(){
+    var that = this;
+    that.authorizing = true;
+    Twitter.renderInterface.call(this);
+    console.log("Checking authorization...");
+    return Twitter.sendRequest.call(this, 'isAuthorized').then(function(res){
+      console.log("Authorization results: ", res);
+      that.authorizing = false;
+      if(res.success && res.data.success){
+        that.twitterUserInfo = res.data;
+      }
+
+      Twitter.renderInterface.call(that);
+    }).catch(function(err){
+      that.authorizing = false;
+      console.log("Error authorizing user: ", err);
+      Twitter.renderInterface.call(that);
+    });
   };
 
   /**
@@ -276,7 +299,11 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    */
   Twitter.sendRequest = function (type, options){
     return new Promise(function (resolve, reject) {
-      var parameters = {argvs: {type: type}};
+      var parameters = {
+        argvs: {
+          type: type
+        }
+      }
       if(options){
         Object.assign(parameters.argvs, options);
       }
@@ -299,6 +326,45 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
   };
 
   /**
+   * Called when the user needs to start the authorization
+   * process.
+   */
+  Twitter.initAuth = function(){
+    var that = this;
+    return Twitter.sendRequest.call(this, 'getAuthUrl').then(function(res){
+      if(res.success && res.data.success){
+          
+        var w = window.open(res.data.url, 'Authorize', 'location=0,status=0,width=800,height=600');
+        if(!w){
+          return notification.notify( 'warning', 'You seem to have a popup blocker, please disable it and try again.');
+        }
+
+        var winClosed = function(a, b, c){
+          Twitter.userAuthCheck.call(that);
+        }; 
+
+        var isClosed = function(){
+          if (w.closed !== false) {
+            winClosed.call(this);
+          }else{
+            setTimeout(isClosed.bind(that), 200);    
+          }
+        }
+
+        setTimeout(isClosed.bind(that), 200);
+      }else{
+        console.log("Invalid response: ", res);
+        notification.notify( 'error', 'Error initiating redirection');
+        Twitter.renderInterface.call(that);
+      }
+    }).catch(function(err){
+      console.log("Error getting auth url: ", err);
+      notification.notify( 'error', 'Error initiating authorization' );
+      Twitter.renderInterface.call(that);
+    });
+  };
+
+  /**
    * Helper method to populate the properties panel.
    */
   Twitter.renderInterface = function(){
@@ -318,6 +384,11 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     this.myPropertiesWindow.find(".tweet-title").focusout(function(el){
       var index = getIndexFromElement(el);
       Twitter.updateItem.call(that, index);
+    });
+
+    this.myPropertiesWindow.find("#btAuthorize").click(function(el){
+      $(this).addClass("disabled loading");
+      Twitter.initAuth.call(that);
     });
 
     // Display elements

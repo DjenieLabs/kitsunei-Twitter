@@ -1,6 +1,6 @@
 <!-- Custom Settings -  Twitter Block -->
 <template id="block-custom-properties">
-  
+  {{#if twitterUserInfo }}
   <div class="ui grid">
     <div class="ten wide column">
       <strong>Add New Template</strong>
@@ -10,8 +10,6 @@
       </button>
     </div>
   </div>
-  
-  
   
   <div class="ui inverted divider"></div>
   
@@ -51,88 +49,109 @@
     </div>
     {{/each}}
   </div>
+  {{else}}
+  <div class="ui one column centered grid">
+    <div class="centered row">
+      {{#if authorizing}}
+      <i class="big blue twitter icon"></i>
+      {{else}}
+      <strong>You need to authorize the application</strong>
+      {{/if}}
+    </div>
+    
+    <div class="centered row">
+      {{#if authorizing}}
+      <strong>Checking authorization... <i class="ui white loading spinner icon"></i></strong>
+      {{else}}
+      <button id="btAuthorize" class="ui twitter button">
+        <i class="blue twitter icon"></i>
+        Twitter
+      </button>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
 </template>
 
 
 
 <!-- Popup to configure tweet -->
 <template id="twitter-preview">
-<div id="msg-tweet-preview" class="ui mini modal">
-<div class="header">This is a preview of your tweet
-  <button id="tweet-close-btn" class="ui mini icon button">
-      <i class="remove grey icon"></i>
-  </button>
-    
-</div>
-<div id="content" class="content">
-  <div class="tweet-box">
-    <div class="EmbeddedTweet EmbeddedTweet--edge js-clickToOpenTarget tweet-InformationCircle-widgetParent">
-      <div class="EmbeddedTweet-tweet">
-        <blockquote class="Tweet h-entry js-tweetIdInfo subject expanded is-deciderHtmlWhitespace" cite="https://twitter.com/Kitsunei_sensor" >
-          <div class="Tweet-header u-cf">
-            <div class="Tweet-brand u-floatRight">
-              <a target="_blank" href="https://twitter.com/Kitsunei_sensor" ><span class="FollowButton-bird"><div class="Icon Icon--twitter " aria-label="View on Twitter" title="View on Twitter" role="presentation"></div>
-              </span></a>
-            </div>
-            
-            <div class="TweetAuthor js-inViewportScribingTarget js-aBScribingTarget" >
-              <a class="TweetAuthor-link Identity u-linkBlend" target="_blank" href="https://twitter.com/Kitsunei_sensor">
-                <span class="TweetAuthor-avatar Identity-avatar">
-                  <img class="Avatar Avatar--edge" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH4QsVACAwsobgNQAAA7FJREFUWMPNmF1vG0UUhp+Z/ba9a6d20gSiRMkFQgUhLqLeI34jf4aCuO0FF0hAVJWINqWlTmw3jr/W+zlcbGwEWTc7gUUcWb7ZmTPPnH3PnDMrvnryQvE/MvOfTFYKFH/dj0AgxH8MpBRICW3PpNO08GwDgDDOGM8TJsuUPOdeYNpASkGnafH5QcBhz6PhGMiblXOlWEQZ58OQH15NGM8TbSgtIKWg61t8+Wib7cC+9VwKQcs1+WTfZydw+PZ0wGiqByV1gCxT8Ph4qxTm77Yd2Dw+3sIy9UJUGUgp2G07HHS9ys4Puh67bQelkcdaEdrruJhG9R2bhmCv49YTISEg8PSTMvDMejQkBBhSP48NqXcuaWkoyfQP9SRT9WhIKZgtU22g2TKtCQjF1TzRcq4UxRyqT6quIQSjWUwYZ5Wdh3HGaBYjqC4iLVFPwpT+dVTZef86YhKm9Z3UaaZ43p+R5Xe/giwvxqaaiaAFJAScD0POLuZ3jj27mHM+DLWLqxZQkfo5T8+ueDlYbBz3crDg6dkVSZZrJQFUqPYrh44l2QlsPtzy+OVizjc/D/l4r8XRTgPfLdxMlykvLhc8ezuj5Zp8uh/w5irkchITJfk6yvcGUgqChslHu00Ouw26voVlSI53Gnz/YsyztzNO30yxzSLQcZojpeCw53Fy1GGrafHZgc9omnA+WvC8P2eyeL/IxaaeWqmihfjiUY9t/3a7keWK4Szm4jpaH5gt12S37dBt2aVlZjCN+e50yGASb4TaGCHTEJwcdUphoKhRDwOHh4Fz11tf27Zvc3LU4clPg42ZWipqpaDn2+w/0Gsdqtj+A5eeb28UezkQRTO20sa/abYpi6Ztw/PSFaUoIlSX9XybTZ1MKZBlSNoNqzagdqPI1kpASoFrSZqOURtQ0zFwLVmqo1JM15Y4NehnZY4pce2qEQJcy7hXu1rVDClwLaNU2CWYCtsQ69toHSaFwDbEzfbvABIIwiQnSvPagKI0J4zz0sbt1kktBPTHEV//eMnxTpMPOg6+Z2Fp3MfKLMkU0zDh93HEr5dz+tdRafkoLR25Uvw2WvL63RLPNthqWvRaNl3fptMwaTomjiUxpUDKP/epgDxXpLkiSnLmUcp4kTKaxgxnMVfzhDDOUAr9WraasIgzFlHG63chUggsQ+BYBp4t8SxjDQasQcIkI4xzoiQjyRS5UsXrKX7vrfZ39kPi5m8VhyRTxGnKNGTjbWI1drWwToLc64PVyr/ObaKq/QFUI3IyVD5umgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0xMS0yMFQyMzozMjo0OCswMTowMLezc/EAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMTEtMjBUMjM6MzI6NDgrMDE6MDDG7stNAAAAAElFTkSuQmCC">
-                </span>
-                <span class="TweetAuthor-decoratedName">
-                  <span class="TweetAuthor-name TweetAuthor-name--flex Identity-name customisable-highlight" title="jack" >{{username}}</span>
-                  <span class="TweetAuthor-verifiedBadge TweetAuthor-verifiedBadge--flex"><div class="Icon Icon--verified " aria-label="Verified Account" title="Verified Account" role="img"></div>
-                    <b class="u-hiddenVisually">✔</b></span>
-                  </span>
-                  <span class="TweetAuthor-screenName Identity-screenName" dir="ltr">@{{username}}</span>
-                </a>
-              </div>
-              
-            </div>
-            <div class="Tweet-body e-entry-content">
-              
-              <div class="u-hiddenVisually js-inViewportScribingTarget"></div>
-              
-              <p class="Tweet-text e-entry-title" lang="en" dir="ltr">
-                {{contentInit}}
-                {{#ifNotEqual contentLast ''}}
-                <span class="u-hiddenVisually">{{contentLast}}&nbsp;</span>…
-                {{/ifNotEqual}}
-              </p>
-              
-              <div class="Tweet-metadata dateline">
-                
-                <a class="u-linkBlend u-url customisable-highlight long-permalink" data-datetime="2017-09-26T21:00:52+0000" data-scribe="element:full_timestamp" target="_blank" href="https://twitter.com/Kitsunei_sensor">
-                  <time class="dt-updated" datetime="2017-09-26T21:00:52+0000" pubdate="" >{{date}}</time></a>
+  <div id="msg-tweet-preview" class="ui mini modal">
+    <div class="header">This is a preview of your tweet
+      <button id="tweet-close-btn" class="ui mini icon button">
+        <i class="remove grey icon"></i>
+      </button>
+    </div>
+    <div id="content" class="content">
+      <div class="tweet-box">
+        <div class="EmbeddedTweet EmbeddedTweet--edge js-clickToOpenTarget tweet-InformationCircle-widgetParent">
+          <div class="EmbeddedTweet-tweet">
+            <blockquote class="Tweet h-entry js-tweetIdInfo subject expanded is-deciderHtmlWhitespace" cite="https://twitter.com/Kitsunei_sensor" >
+              <div class="Tweet-header u-cf">
+                <div class="Tweet-brand u-floatRight">
+                  <a target="_blank" href="https://twitter.com/Kitsunei_sensor" ><span class="FollowButton-bird"><div class="Icon Icon--twitter " aria-label="View on Twitter" title="View on Twitter" role="presentation"></div>
+                  </span></a>
                 </div>
                 
-                <ul class="Tweet-actions" role="menu" aria-label="Tweet actions">
-                  <li class="Tweet-action">
-                    <a class="TweetAction TweetAction--replyEdge web-intent" target="_blank" href="https://twitter.com/Kitsunei_sensor" data-scribe="element:reply"><div class="Icon Icon--reply TweetAction-icon Icon--replyEdge" aria-label="Reply" title="Reply" role="img"></div>
-                      <span class="TweetAction-stat" aria-hidden="true">{{replies}}</span>
-                      <span class="u-hiddenVisually">{{replies}} Replies</span>
+                <div class="TweetAuthor js-inViewportScribingTarget js-aBScribingTarget" >
+                  <a class="TweetAuthor-link Identity u-linkBlend" target="_blank" href="https://twitter.com/Kitsunei_sensor">
+                    <span class="TweetAuthor-avatar Identity-avatar">
+                      <img class="Avatar Avatar--edge" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH4QsVACAwsobgNQAAA7FJREFUWMPNmF1vG0UUhp+Z/ba9a6d20gSiRMkFQgUhLqLeI34jf4aCuO0FF0hAVJWINqWlTmw3jr/W+zlcbGwEWTc7gUUcWb7ZmTPPnH3PnDMrvnryQvE/MvOfTFYKFH/dj0AgxH8MpBRICW3PpNO08GwDgDDOGM8TJsuUPOdeYNpASkGnafH5QcBhz6PhGMiblXOlWEQZ58OQH15NGM8TbSgtIKWg61t8+Wib7cC+9VwKQcs1+WTfZydw+PZ0wGiqByV1gCxT8Ph4qxTm77Yd2Dw+3sIy9UJUGUgp2G07HHS9ys4Puh67bQelkcdaEdrruJhG9R2bhmCv49YTISEg8PSTMvDMejQkBBhSP48NqXcuaWkoyfQP9SRT9WhIKZgtU22g2TKtCQjF1TzRcq4UxRyqT6quIQSjWUwYZ5Wdh3HGaBYjqC4iLVFPwpT+dVTZef86YhKm9Z3UaaZ43p+R5Xe/giwvxqaaiaAFJAScD0POLuZ3jj27mHM+DLWLqxZQkfo5T8+ueDlYbBz3crDg6dkVSZZrJQFUqPYrh44l2QlsPtzy+OVizjc/D/l4r8XRTgPfLdxMlykvLhc8ezuj5Zp8uh/w5irkchITJfk6yvcGUgqChslHu00Ouw26voVlSI53Gnz/YsyztzNO30yxzSLQcZojpeCw53Fy1GGrafHZgc9omnA+WvC8P2eyeL/IxaaeWqmihfjiUY9t/3a7keWK4Szm4jpaH5gt12S37dBt2aVlZjCN+e50yGASb4TaGCHTEJwcdUphoKhRDwOHh4Fz11tf27Zvc3LU4clPg42ZWipqpaDn2+w/0Gsdqtj+A5eeb28UezkQRTO20sa/abYpi6Ztw/PSFaUoIlSX9XybTZ1MKZBlSNoNqzagdqPI1kpASoFrSZqOURtQ0zFwLVmqo1JM15Y4NehnZY4pce2qEQJcy7hXu1rVDClwLaNU2CWYCtsQ69toHSaFwDbEzfbvABIIwiQnSvPagKI0J4zz0sbt1kktBPTHEV//eMnxTpMPOg6+Z2Fp3MfKLMkU0zDh93HEr5dz+tdRafkoLR25Uvw2WvL63RLPNthqWvRaNl3fptMwaTomjiUxpUDKP/epgDxXpLkiSnLmUcp4kTKaxgxnMVfzhDDOUAr9WraasIgzFlHG63chUggsQ+BYBp4t8SxjDQasQcIkI4xzoiQjyRS5UsXrKX7vrfZ39kPi5m8VhyRTxGnKNGTjbWI1drWwToLc64PVyr/ObaKq/QFUI3IyVD5umgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0xMS0yMFQyMzozMjo0OCswMTowMLezc/EAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMTEtMjBUMjM6MzI6NDgrMDE6MDDG7stNAAAAAElFTkSuQmCC">
+                    </span>
+                    <span class="TweetAuthor-decoratedName">
+                      <span class="TweetAuthor-name TweetAuthor-name--flex Identity-name customisable-highlight" title="jack" >{{username}}</span>
+                      <span class="TweetAuthor-verifiedBadge TweetAuthor-verifiedBadge--flex"><div class="Icon Icon--verified " aria-label="Verified Account" title="Verified Account" role="img"></div>
+                        <b class="u-hiddenVisually">✔</b></span>
+                      </span>
+                      <span class="TweetAuthor-screenName Identity-screenName" dir="ltr">@{{username}}</span>
                     </a>
-                  </li>
-                  <li class="Tweet-action">
-                    <a class="TweetAction TweetAction--retweetEdge web-intent" target="_blank" href="https://twitter.com/Kitsunei_sensor" data-scribe="element:retweet"><div class="Icon Icon--retweet TweetAction-icon Icon--retweetEdge" aria-label="Retweet" title="Retweet" role="img"></div>
-                      <span class="TweetAction-stat" aria-hidden="true">{{retweets}}</span>
-                      <span class="u-hiddenVisually">{{retweets}} Retweets</span>
-                    </a>
-                  </li>
-                  <li class="Tweet-action">
-                    <a class="TweetAction TweetAction--heartEdge web-intent" target="_blank" href="https://twitter.com/Kitsunei_sensor" data-scribe="element:heart"><div class="Icon Icon--heart TweetAction-icon Icon--heartEdge" aria-label="Like" title="Like" role="img"></div>
-                      <span class="TweetAction-stat"aria-hidden="true">{{likes}}</span>
-                      <span class="u-hiddenVisually">{{likes}} likes</span>
-                    </a>
-                  </li>
-                </ul>
-                <div class="js-aBScribingTarget"></div>
+                  </div>
+                  
+                </div>
+                <div class="Tweet-body e-entry-content">
+                  
+                  <div class="u-hiddenVisually js-inViewportScribingTarget"></div>
+                  
+                  <p class="Tweet-text e-entry-title" lang="en" dir="ltr">
+                    {{contentInit}}
+                    {{#ifNotEqual contentLast ''}}
+                    <span class="u-hiddenVisually">{{contentLast}}&nbsp;</span>…
+                    {{/ifNotEqual}}
+                  </p>
+                  
+                  <div class="Tweet-metadata dateline">
+                    
+                    <a class="u-linkBlend u-url customisable-highlight long-permalink" data-datetime="2017-09-26T21:00:52+0000" data-scribe="element:full_timestamp" target="_blank" href="https://twitter.com/Kitsunei_sensor">
+                      <time class="dt-updated" datetime="2017-09-26T21:00:52+0000" pubdate="" >{{date}}</time></a>
+                    </div>
+                    
+                    <ul class="Tweet-actions" role="menu" aria-label="Tweet actions">
+                      <li class="Tweet-action">
+                        <a class="TweetAction TweetAction--replyEdge web-intent" target="_blank" href="https://twitter.com/Kitsunei_sensor" data-scribe="element:reply"><div class="Icon Icon--reply TweetAction-icon Icon--replyEdge" aria-label="Reply" title="Reply" role="img"></div>
+                          <span class="TweetAction-stat" aria-hidden="true">{{replies}}</span>
+                          <span class="u-hiddenVisually">{{replies}} Replies</span>
+                        </a>
+                      </li>
+                      <li class="Tweet-action">
+                        <a class="TweetAction TweetAction--retweetEdge web-intent" target="_blank" href="https://twitter.com/Kitsunei_sensor" data-scribe="element:retweet"><div class="Icon Icon--retweet TweetAction-icon Icon--retweetEdge" aria-label="Retweet" title="Retweet" role="img"></div>
+                          <span class="TweetAction-stat" aria-hidden="true">{{retweets}}</span>
+                          <span class="u-hiddenVisually">{{retweets}} Retweets</span>
+                        </a>
+                      </li>
+                      <li class="Tweet-action">
+                        <a class="TweetAction TweetAction--heartEdge web-intent" target="_blank" href="https://twitter.com/Kitsunei_sensor" data-scribe="element:heart"><div class="Icon Icon--heart TweetAction-icon Icon--heartEdge" aria-label="Like" title="Like" role="img"></div>
+                          <span class="TweetAction-stat"aria-hidden="true">{{likes}}</span>
+                          <span class="u-hiddenVisually">{{likes}} likes</span>
+                        </a>
+                      </li>
+                    </ul>
+                    <div class="js-aBScribingTarget"></div>
+                  </div>
+                </blockquote>
               </div>
-            </blockquote>
+            </div>	
           </div>
-        </div>	
+        </div>
       </div>
-    </div>
-  </div>
-</template>
+    </template>
