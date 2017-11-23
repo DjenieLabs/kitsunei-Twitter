@@ -97,14 +97,14 @@
                 <div class="TweetAuthor js-inViewportScribingTarget js-aBScribingTarget" >
                   <a class="TweetAuthor-link Identity u-linkBlend" target="_blank" href="https://twitter.com/Kitsunei_sensor">
                     <span class="TweetAuthor-avatar Identity-avatar">
-                      <img class="Avatar Avatar--edge" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH4QsVACAwsobgNQAAA7FJREFUWMPNmF1vG0UUhp+Z/ba9a6d20gSiRMkFQgUhLqLeI34jf4aCuO0FF0hAVJWINqWlTmw3jr/W+zlcbGwEWTc7gUUcWb7ZmTPPnH3PnDMrvnryQvE/MvOfTFYKFH/dj0AgxH8MpBRICW3PpNO08GwDgDDOGM8TJsuUPOdeYNpASkGnafH5QcBhz6PhGMiblXOlWEQZ58OQH15NGM8TbSgtIKWg61t8+Wib7cC+9VwKQcs1+WTfZydw+PZ0wGiqByV1gCxT8Ph4qxTm77Yd2Dw+3sIy9UJUGUgp2G07HHS9ys4Puh67bQelkcdaEdrruJhG9R2bhmCv49YTISEg8PSTMvDMejQkBBhSP48NqXcuaWkoyfQP9SRT9WhIKZgtU22g2TKtCQjF1TzRcq4UxRyqT6quIQSjWUwYZ5Wdh3HGaBYjqC4iLVFPwpT+dVTZef86YhKm9Z3UaaZ43p+R5Xe/giwvxqaaiaAFJAScD0POLuZ3jj27mHM+DLWLqxZQkfo5T8+ueDlYbBz3crDg6dkVSZZrJQFUqPYrh44l2QlsPtzy+OVizjc/D/l4r8XRTgPfLdxMlykvLhc8ezuj5Zp8uh/w5irkchITJfk6yvcGUgqChslHu00Ouw26voVlSI53Gnz/YsyztzNO30yxzSLQcZojpeCw53Fy1GGrafHZgc9omnA+WvC8P2eyeL/IxaaeWqmihfjiUY9t/3a7keWK4Szm4jpaH5gt12S37dBt2aVlZjCN+e50yGASb4TaGCHTEJwcdUphoKhRDwOHh4Fz11tf27Zvc3LU4clPg42ZWipqpaDn2+w/0Gsdqtj+A5eeb28UezkQRTO20sa/abYpi6Ztw/PSFaUoIlSX9XybTZ1MKZBlSNoNqzagdqPI1kpASoFrSZqOURtQ0zFwLVmqo1JM15Y4NehnZY4pce2qEQJcy7hXu1rVDClwLaNU2CWYCtsQ69toHSaFwDbEzfbvABIIwiQnSvPagKI0J4zz0sbt1kktBPTHEV//eMnxTpMPOg6+Z2Fp3MfKLMkU0zDh93HEr5dz+tdRafkoLR25Uvw2WvL63RLPNthqWvRaNl3fptMwaTomjiUxpUDKP/epgDxXpLkiSnLmUcp4kTKaxgxnMVfzhDDOUAr9WraasIgzFlHG63chUggsQ+BYBp4t8SxjDQasQcIkI4xzoiQjyRS5UsXrKX7vrfZ39kPi5m8VhyRTxGnKNGTjbWI1drWwToLc64PVyr/ObaKq/QFUI3IyVD5umgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0xMS0yMFQyMzozMjo0OCswMTowMLezc/EAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMTEtMjBUMjM6MzI6NDgrMDE6MDDG7stNAAAAAElFTkSuQmCC">
+                      <img class="Avatar Avatar--edge" alt="" src="{{twitterUserInfo.profileImg}}">
                     </span>
                     <span class="TweetAuthor-decoratedName">
-                      <span class="TweetAuthor-name TweetAuthor-name--flex Identity-name customisable-highlight" title="jack" >{{username}}</span>
+                      <span class="TweetAuthor-name TweetAuthor-name--flex Identity-name customisable-highlight" title="jack" >{{twitterUserInfo.screen_name}}</span>
                       <span class="TweetAuthor-verifiedBadge TweetAuthor-verifiedBadge--flex"><div class="Icon Icon--verified " aria-label="Verified Account" title="Verified Account" role="img"></div>
                         <b class="u-hiddenVisually">✔</b></span>
                       </span>
-                      <span class="TweetAuthor-screenName Identity-screenName" dir="ltr">@{{username}}</span>
+                      <span class="TweetAuthor-screenName Identity-screenName" dir="ltr">@{{twitterUserInfo.screen_name}}</span>
                     </a>
                   </div>
                   

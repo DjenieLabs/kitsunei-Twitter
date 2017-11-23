@@ -412,7 +412,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
         var d = moment().format('h:mm A - MMM Do YYYY');
         var params = {
           basePath: this.basePath,
-          username: 'alexagu',
+          twitterUserInfo: this.twitterUserInfo,
           contentInit: parsedTemplate.substr(0, 200),
           contentLast: parsedTemplate.substr(201),
           date: d,
@@ -466,8 +466,10 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
    * Creates a new empty template
    */
   Twitter.addNewTemplate = function(){
+    this.templateCounter = this.templateCounter || 0;
+    this.templateCounter++;
     var template = {
-      title: '',
+      title: 'Template'+this.templateCounter,
       text: 'Type your tweet here. You can use _variableName_ to create dynamic content! #kitsunei'
     }
 
