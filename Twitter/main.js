@@ -5,8 +5,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
   // number of followers.
   // Preview (added dynamically): Simulates a Tweet event but shows a popup with the tweet instead
   // of sending it.
-  var actions = ["Tweet", "GetFollowersCount"];
-  var inputs = ["SendOK", "SendError", "FollowersCount", "Mention"];
+  var actions = ["Tweet"];
+  // TODO: Implement follower count change, and mentions event
+  var inputs = ["SendOK", "SendError"];
   var _objects = {};
 
   var Twitter = {};
@@ -209,8 +210,8 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
     if(event.action === 'Tweet'){
       // Sends whatever data arrive.
       Twitter.tweet.call(this, event.data);
-    }else if(event.action === 'GetFollowersCount'){
-      Twitter.getFollowers.call(this);
+    // }else if(event.action === 'GetFollowersCount'){
+    //   Twitter.getFollowers.call(this);
     }else if(eventIs(event, "Set: ")){
       var varName = getTitle(event, "Set: ");
       this.config.values[varName] = event.data;
@@ -277,11 +278,15 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
   Twitter.tweet = function(text){
     var that = this;
     return Twitter.sendRequest.call(this, 'sendTweet', {message: text}).then(function(r){
-      console.log("Tweet sent! ", r);
-      notification.notify( 'success', 'Tweet sent!' );
-      // Send LM event
-      var evt = {sendok: true};
-      that.processData(evt);
+      console.log("Send Tweet response: ", r);
+      if(r.success && r.data.success){
+        notification.notify( 'success', 'Tweet sent!' );
+        // Send LM event
+        var evt = {sendok: true};
+        that.processData(evt);
+      }else{
+        notification.notify( 'error', 'Error sending tweet: ' + r.reason || r.data.reason || 'Unknown');
+      }
     }).catch(function(e){
       console.log("Error sending tweet: ", e);
       var msg = "Error sending tweet";
