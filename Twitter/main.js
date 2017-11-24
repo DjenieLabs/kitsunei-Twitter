@@ -126,21 +126,6 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
 
 
   /**
-   * Intercepts the properties panel save action.
-   * You must call the save method directly for the
-   * new values to be sent to hardware blocks.
-   * @param settings is an object with the values
-   * of the elements rendered in the interface.
-   * NOTE: For the settings object to contain anything
-   * you MUST have rendered the panel using standard
-   * ways (easy.showBaseSettings and easy.renderCustomSettings)
-   */
-  Twitter.onSaveProperties = function(settings) {
-    this.settings = settings;
-  };
-
-
-  /**
    * Triggered when added for the first time to the side bar.
    * This script should subscribe to all the events and broadcast
    * to all its copies the data.
@@ -149,33 +134,41 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
    */
   Twitter.onLoad = function() {
     var that = this;
+    var requiredVersion = '1.2.2';
     this.config = {
       templates: [],
       values: {}
     };
 
-    // Load previously stored settings
-    if (this.storedSettings && this.storedSettings.templates) {
-      this.config.templates = this.storedSettings.templates || [];
-    }
+    // First we make sure we are working with the correct version of the hub
+    Hub.isMinVersion(requiredVersion, function onYes(){
+      // Load previously stored settings
+      if (this.storedSettings && this.storedSettings.templates) {
+        this.config.templates = this.storedSettings.templates || [];
+      }
 
-    // Load our properties template and keep it in memory
-    this.loadTemplate('properties.html').then(function(template) {
-      that.propTemplate = template;
-      // Since the link was already loaded it gets loaded from the cache
-      // then we select the correct template
-      return that.loadTemplate('properties.html', 'twitter-preview').then(function(template) {
-        that.previewBox = template;
+      // Load our properties template and keep it in memory
+      this.loadTemplate('properties.html').then(function(template) {
+        that.propTemplate = template;
+        // Since the link was already loaded it gets loaded from the cache
+        // then we select the correct template
+        return that.loadTemplate('properties.html', 'twitter-preview').then(function(template) {
+          that.previewBox = template;
+          Twitter.renderInterface.call(that);
+        });
       });
-    });
 
-    this.loadStyleSheet(this.basePath + "css/twitter-block-style.css").then(function(){
-      console.log("Twitter stylesheet loaded!")
-    }).catch(function(e){
-      console.log("Error loading stylesheet: ", e);
-    });
+      this.loadStyleSheet(this.basePath + "css/twitter-block-style.css").then(function(){
+        console.log("Twitter stylesheet loaded!")
+      }).catch(function(e){
+        console.log("Error loading stylesheet: ", e);
+      });
 
-    Twitter.userAuthCheck.call(this);
+      Twitter.userAuthCheck.call(this);
+    }, function(){
+      notification.notify('error', 'This block requires the Hub to be '+requiredVersion+' or greater!');
+      that.deactivate();
+    }, this);
   };
 
   /**
@@ -269,6 +262,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
       that.authorizing = false;
       console.log("Error authorizing user: ", err);
       Twitter.renderInterface.call(that);
+      notification.notify('warning', 'Error getting the authorization. This block may not work.');
     });
   };
 
@@ -620,41 +614,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
   /**
    * Parent is send new data (using outputs).
    */
-  Twitter.onNewData = function() {
-
+  Twitter.onNewData = function(source, data) {
+    console.log("Parent block is sending: ", source, data);
   };
-
-  /**
-   * Blocks have the ability to be replaced by other blocks
-   * by dragging and dropping a block from the left panel
-   * onto the canvas instance. This is useful when for example
-   * you move a hardware block to a different radio. Since
-   * once powered up again, it will appear as a different block
-   * (because it now belongs to a different node), rather than
-   * adding the new block to the canvas and copy the logic from 
-   * the offline one, you can just drag and drop the new
-   * block onto the offline instance in your canvas; this will
-   * associate the offline block with the online instance, hence
-   * making it appear online again.
-   * 
-   * This is also true for virtual blocks in cases when you create
-   * a virtual block that uses a hardware one.
-   * 
-   * In this method you need to return an array of numbers
-   * that correspond to the serial number of the blocks you want
-   * to accept. Hardware blocks don't need to return their serial
-   * number as they are accepted by default.
-   */
-  
-  /**
-   * A copy has been dropped on the canvas.
-   * I need to keep a copy of the processor to be triggered when
-   * new data arrives.
-   */
-  Twitter.onAddedToCanvas = function() {
-
-  };
-
 
 
   return Twitter;
