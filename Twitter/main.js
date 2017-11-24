@@ -7,7 +7,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
   // of sending it.
   var actions = ["Tweet"];
   // TODO: Implement follower count change, and mentions event
-  var inputs = ["SendOK", "SendError"];
+  var inputs = ["SendOK", "SendError", "NewFollower"];
   var _objects = {};
 
   var Twitter = {};
@@ -184,25 +184,69 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
    */
   Twitter.createStreamSubscriptions = function(){
     var that = this;
-    // return new Promise(function (resolve, reject) {
-      if(!that.twitterUserInfo) reject("Not authorized");
-      var opts = {
-        argvs: {
-          type: 'followersCountStream'
-        }
-      };
-      return Hub.subscribe("service:twitter", opts).then(function(eventId) {
-        console.log("Event: ", eventId);
-        that._subsHookId = eventId;
-        // Listen for this type of events
-        Hub.on(eventId, function(data) {
+
+    if(!that.twitterUserInfo) reject("Not authorized");
+    var opts = {
+      argvs: {
+        type: 'followersCountStream'
+      }
+    };
+
+    return Hub.subscribe("service:twitter", opts).then(function(eventId) {
+      console.log("Event: ", eventId);
+      that._subsHookId = eventId;
+      // Listen for this type of events
+      Hub.on(eventId, function(data) {
+        if(data.follower && data.followers_count){
           console.log("Twitter stream event: ", data);
-        });
-      }).catch(function(err){
-        console.log("Error starting subscription: ", err);
+          var event = {newfollower: data.followers_count};
+          // Send to widgets
+          that.dispatchDataFeed(event);
+          // Send to LM
+          that.processData(event);
+        }else if(data.connection_dropped){
+          console.log("Subscription dropped by the Server!");
+          // If a connection is dropped, we re-issue 
+          Twitter.unsubscribeFromStreams.call(that, Twitter.createStreamSubscriptions.bind(that));
+        }else{
+          console.log("Invalid event object: ", data);
+        }
       });
-    // });
+    }).catch(function(err){
+      console.log("Error starting subscription: ", err);
+    });
   };
+
+  Twitter.onBeforeDestroy = function(){
+    Twitter.unsubscribeFromStreams.call(this)
+  }
+
+  /**
+   * Called when the block is removed from
+   * the canvas. Here we remove subscriptions.
+   * @param {*Function} cb is a method to call
+   * when the process is finished.
+   */
+  Twitter.unsubscribeFromStreams = function(cb){
+    if(this._subsHookId){
+      var that = this;
+      return Hub.unsubscribe(this._subsHookId).then(function(){
+        console.log("Unsubscribed from Twitter Service");
+      }).catch(function(err){
+        console.log("Error unsubscribing from Twitter: ", err);
+        if(typeof cb === 'function') cb(err);
+      }).then(function(){
+        console.log("Removing local subscription listener...");
+        if(!Hub.off(that._subsHookId)){
+          console.log("Error removing subscription '%s' before Twitter destruction", that._subsHookId);
+        }else{
+          console.log("Local subscription removed!");
+        }
+        if(typeof cb === 'function') cb();
+      });
+    }
+  }
+
 
   /**
   * Checks if the user has authorize the application
