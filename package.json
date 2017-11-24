@@ -1,6 +1,6 @@
 {
   "name": "kitsunei-Twitter",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Send tweets from the Logic Maker",
   "repository": "kitsunei-Twitter",
   "scripts": {
