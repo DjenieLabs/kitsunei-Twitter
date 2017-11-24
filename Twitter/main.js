@@ -179,9 +179,35 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
   };
 
   /**
+   * Registers the subscriptions for the streaming
+   * events (followers count, etc)
+   */
+  Twitter.createStreamSubscriptions = function(){
+    var that = this;
+    // return new Promise(function (resolve, reject) {
+      if(!that.twitterUserInfo) reject("Not authorized");
+      var opts = {
+        argvs: {
+          type: 'followersCountStream'
+        }
+      };
+      return Hub.subscribe("service:twitter", opts).then(function(eventId) {
+        console.log("Event: ", eventId);
+        that._subsHookId = eventId;
+        // Listen for this type of events
+        Hub.on(eventId, function(data) {
+          console.log("Twitter stream event: ", data);
+        });
+      }).catch(function(err){
+        console.log("Error starting subscription: ", err);
+      });
+    // });
+  };
+
+  /**
   * Checks if the user has authorize the application
   */
-  Twitter.userAuthCheck = function(){
+  Twitter.userAuthCheck = function(cb){
     var that = this;
     that.authorizing = true;
     Twitter.renderInterface.call(this);
@@ -194,6 +220,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
       }
 
       Twitter.renderInterface.call(that);
+      Twitter.createStreamSubscriptions.call(that);
     }).catch(function(err){
       that.authorizing = false;
       console.log("Error authorizing user: ", err);
