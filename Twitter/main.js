@@ -134,7 +134,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
    */
   Twitter.onLoad = function() {
     var that = this;
-    var requiredVersion = '1.2.2';
+    var requiredVersion = '1.2.4';
     this.config = {
       templates: [],
       values: {}
