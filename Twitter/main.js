@@ -178,7 +178,10 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy', 'User'], function(Hub, RIB,
   Twitter.createStreamSubscriptions = function(){
     var that = this;
 
-    if(!that.twitterUserInfo) reject("Not authorized");
+    if(!that.twitterUserInfo){
+      return console.log("Aborting stream subscriptions, no yet authorized");
+    }
+    
     var opts = {
       argvs: {
         type: 'followersCountStream'
