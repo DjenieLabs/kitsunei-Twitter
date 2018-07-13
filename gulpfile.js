@@ -7,7 +7,8 @@ var gulp = require('gulp'),
     htmlmin = require('gulp-htmlmin'),
     babel = require('gulp-babel');
 
-
+var zip = require('gulp-zip');
+var del = require('del');
 var dest = "dist/";
 
 // Check the code quality
@@ -54,5 +55,19 @@ gulp.task('html', function (cb) {
   );
 });
 
-gulp.task('build', ['js', 'css', 'html']);
-gulp.task('default', ['qualitychecker']);
+gulp.task('clean', function (cb) {
+	return del([dest + "/bundle.block"])
+});
+
+
+gulp.task('bundle', function (cb) {
+	return pump([
+		gulp.src(dest + '/**'),
+		zip('bundle.block'),
+		gulp.dest(dest)
+	], cb);
+});
+
+
+gulp.task('build', gulp.series('clean', gulp.parallel('js', 'css', 'html'), 'bundle'));
+gulp.task('default', gulp.series('qualitychecker'));
